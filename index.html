@@ -10,21 +10,22 @@
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;background:#0F1720;overflow:hidden;font-family:'IBM Plex Sans',Arial,sans-serif}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
-section{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;opacity:0;transition:opacity .35s ease;pointer-events:none}
-section.on{opacity:1;pointer-events:auto}
+section{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;opacity:0;visibility:hidden;transition:opacity .25s ease,visibility 0s linear .25s;pointer-events:none}
+section.on{opacity:1;visibility:visible;transition-delay:0s;pointer-events:auto}
 section>*{position:relative}
 h1,h2,h3,p,ul,ol,li{margin:0}
 h1{font-size:96px;font-weight:600;line-height:1.1}h2{font-size:64px;font-weight:600;line-height:1.15}h3{font-size:44px;font-weight:600;line-height:1.2}p{font-size:32px;line-height:1.4}
 ul,ol{padding-left:1.1em}li{padding-left:.2em}
 div{display:flex;flex-direction:column}
+div[style*="display:flex"]{flex-direction:row}
 table{border-collapse:collapse;width:100%}
 th,td{padding:.35em .6em;border-bottom:1px solid #DDE3DF;text-align:left;vertical-align:top}
 th{font-weight:600}
 img{display:block}
 aside{display:none}
-#hud{position:fixed;right:16px;bottom:12px;font:14px/1 'JetBrains Mono',monospace;color:#7A8794;opacity:.8;user-select:none;z-index:9}
-#nav{position:fixed;left:0;right:0;bottom:0;height:4px;background:#1A2530;z-index:9}
-#bar{height:100%;background:#3DBE7A;transition:width .3s ease}
+#hud{display:block;position:fixed;right:16px;bottom:12px;font:14px/1 'JetBrains Mono',monospace;color:#7A8794;opacity:.8;user-select:none;z-index:9}
+#nav{display:block;position:fixed;left:0;right:0;bottom:0;height:4px;background:#1A2530;z-index:9}
+#bar{display:block;height:100%;background:#3DBE7A;transition:width .3s ease}
 </style></head>
 <body>
 <div id="stage">
