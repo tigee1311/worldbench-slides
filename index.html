@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorldBench</title>
+<meta name="description" content="WorldBench: CI-grade regression testing for robotics world models.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#0F1720;overflow:hidden;font-family:'IBM Plex Sans',Arial,sans-serif}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
+section{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;opacity:0;transition:opacity .35s ease;pointer-events:none}
+section.on{opacity:1;pointer-events:auto}
+section>*{position:relative}
+h1,h2,h3,p,ul,ol,li{margin:0}
+h1{font-size:96px;font-weight:600;line-height:1.1}h2{font-size:64px;font-weight:600;line-height:1.15}h3{font-size:44px;font-weight:600;line-height:1.2}p{font-size:32px;line-height:1.4}
+ul,ol{padding-left:1.1em}li{padding-left:.2em}
+div{display:flex;flex-direction:column}
+table{border-collapse:collapse;width:100%}
+th,td{padding:.35em .6em;border-bottom:1px solid #DDE3DF;text-align:left;vertical-align:top}
+th{font-weight:600}
+img{display:block}
+aside{display:none}
+#hud{position:fixed;right:16px;bottom:12px;font:14px/1 'JetBrains Mono',monospace;color:#7A8794;opacity:.8;user-select:none;z-index:9}
+#nav{position:fixed;left:0;right:0;bottom:0;height:4px;background:#1A2530;z-index:9}
+#bar{height:100%;background:#3DBE7A;transition:width .3s ease}
+</style></head>
+<body>
+<div id="stage">
+<section id="cover" style="background:#0F1720; color:#F4F6F3; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; justify-content:space-between">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">worldbench · v0.4.1 · Apache-2.0</p>
+  <div style="display:flex; flex-direction:column; gap:32px">
+    <h1 style="font-size:160px; font-weight:700; line-height:1.0; letter-spacing:-4px">WorldBench</h1>
+    <h2 style="font-size:56px; font-weight:400; line-height:1.2; color:#B8C2CC; max-width:1300px">CI-grade regression testing for robotics world models.</h2>
+  </div>
+  <p style="font-size:32px; color:#B8C2CC; font-style:italic">Did the new checkpoint actually improve, and what got worse?</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">Ayush Adi · github.com/tigee1311/worldbench · worldbench.xyz</p>
+  <aside>WorldBench is an open-source tool for regression testing robotics world-model checkpoints. Think pytest for checkpoints.</aside>
+</section>
+<section id="problem" style="background:#F4F6F3; color:#0F1720; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:56px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">The problem</p>
+  <h2 style="font-size:88px; font-weight:600; line-height:1.1; letter-spacing:-2px; max-width:1500px">Every world-model training run ends the same way.</h2>
+  <div style="display:flex; gap:32px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#7A8794">01</p>
+      <h3 style="font-size:36px; font-weight:600; line-height:1.2">The aggregate metric goes up</h3>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#7A8794">02</p>
+      <h3 style="font-size:36px; font-weight:600; line-height:1.2">Someone eyeballs a few rollouts</h3>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#7A8794">03</p>
+      <h3 style="font-size:36px; font-weight:600; line-height:1.2">The checkpoint ships</h3>
+    </div>
+  </div>
+  <p style="font-size:40px; line-height:1.4; color:#3E4A56; max-width:1500px">Nobody knows which episodes silently got worse. Teams training video world models have nothing like <b>pytest</b> for checkpoints.</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">2</p>
+  <aside>Video world models are the substrate behind modern robot learning, but there is no regression gate for them today.</aside>
+</section>
+<section id="gate" style="background:#0F1720; color:#F4F6F3; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">How it works</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">The checkpoint gate</h2>
+  <div style="display:flex; align-items:center; gap:24px">
+    <div style="width:340px; display:flex; flex-direction:column; gap:12px; background:#1A2530; padding:36px; border:1px solid #2C3A47; border-radius:16px">
+      <h3 style="font-size:32px; font-weight:600; line-height:1.2">Fixed eval suite</h3>
+      <p style="font-size:26px; line-height:1.4; color:#B8C2CC">Same ground-truth episodes, every run</p>
+    </div>
+    <svg viewBox="0 0 72 24" style="width:72px; height:24px; flex:none"><line x1="2" y1="12" x2="58" y2="12" stroke="#7A8794" stroke-width="3"/><path d="M56 4l12 8-12 8z" fill="#7A8794"/></svg>
+    <div style="width:400px; display:flex; flex-direction:column; gap:20px">
+      <div style="display:flex; flex-direction:column; gap:8px; background:#1A2530; padding:28px; border:1px solid #2C3A47; border-radius:16px">
+        <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:26px; color:#3DBE7A">eval-batch</p>
+        <p style="font-size:26px; color:#B8C2CC">baseline checkpoint</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; background:#1A2530; padding:28px; border:1px solid #2C3A47; border-radius:16px">
+        <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:26px; color:#3DBE7A">eval-batch</p>
+        <p style="font-size:26px; color:#B8C2CC">candidate checkpoint</p>
+      </div>
+    </div>
+    <svg viewBox="0 0 72 24" style="width:72px; height:24px; flex:none"><line x1="2" y1="12" x2="58" y2="12" stroke="#7A8794" stroke-width="3"/><path d="M56 4l12 8-12 8z" fill="#7A8794"/></svg>
+    <div style="width:300px; display:flex; flex-direction:column; gap:12px; background:#1A2530; padding:36px; border:1px solid #2C3A47; border-radius:16px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:32px; color:#3DBE7A">gate</p>
+      <p style="font-size:26px; line-height:1.4; color:#B8C2CC">Per-episode and per-horizon deltas</p>
+    </div>
+    <svg viewBox="0 0 72 24" style="width:72px; height:24px; flex:none"><line x1="2" y1="12" x2="58" y2="12" stroke="#7A8794" stroke-width="3"/><path d="M56 4l12 8-12 8z" fill="#7A8794"/></svg>
+    <div style="width:380px; display:flex; flex-direction:column; gap:16px">
+      <div style="display:flex; flex-direction:column; gap:6px; background:#163A2A; padding:24px 28px; border:2px solid #3DBE7A; border-radius:16px">
+        <h3 style="font-size:32px; font-weight:700; color:#3DBE7A">PASS</h3>
+        <p style="font-size:24px; color:#B8C2CC">No regressions</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; background:#3D211C; padding:24px 28px; border:2px solid #E5674F; border-radius:16px">
+        <h3 style="font-size:32px; font-weight:700; color:#E5674F">FAIL</h3>
+        <p style="font-size:24px; color:#B8C2CC">Regressed episodes named</p>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:30px; line-height:1.4; color:#B8C2CC; max-width:1600px">The gate hard-fails if episode suites differ, dataset hashes mismatch, metric configs drift, or coverage silently drops. Every result is re-verifiable later with <b>verify-run</b>.</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">3</p>
+  <aside>Local-first, provenance-hashed, and strict enough that you cannot accidentally compare against the wrong eval suite. Optional paired-bootstrap confidence bounds add statistical rigor.</aside>
+</section>
+<section id="proof" style="background:#F4F6F3; color:#0F1720; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Proof on a real model</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">Two public NanoWM-B/2 checkpoints, one fixed 10-episode RT-1 suite</h2>
+  <div style="display:flex; gap:32px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-size:26px; color:#7A8794; text-transform:uppercase; letter-spacing:1px">Composite score</p>
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:64px; font-weight:600; line-height:1.1">85.67 → 87.28</p>
+      <p style="font-size:30px; color:#1E8A52; font-weight:600">+1.61, candidate improved</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-size:26px; color:#7A8794; text-transform:uppercase; letter-spacing:1px">Episodes improved / regressed</p>
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:64px; font-weight:600; line-height:1.1">9 / 1</p>
+      <p style="font-size:30px; color:#3E4A56">Out of 10 fixed episodes</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:12px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <p style="font-size:26px; color:#7A8794; text-transform:uppercase; letter-spacing:1px">Regression surfaced</p>
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:64px; font-weight:600; line-height:1.1; color:#C4432B">−0.33</p>
+      <p style="font-size:30px; color:#3E4A56">episode_002, not hidden in the aggregate</p>
+    </div>
+  </div>
+  <div style="display:flex; gap:24px; align-items:center">
+    <p style="font-size:28px; background:#163A2A; color:#3DBE7A; padding:12px 28px; border-radius:999px; font-weight:600">Strict gate: PASS</p>
+    <p style="font-size:28px; background:#163A2A; color:#3DBE7A; padding:12px 28px; border-radius:999px; font-weight:600">Engineering threshold: PASS</p>
+    <p style="font-size:26px; color:#7A8794">Tesla T4 · pinned checkpoint SHAs · per-episode seeds</p>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">Baseline nanowm-b2-rt1-abl-pred-v-50k → candidate nanowm-b2-rt1-300k. A fixed-suite validation proof, not a public model ranking.</p>
+  <aside>The point of this slide is the single regression. An aggregate-only workflow would have shipped this checkpoint without ever seeing episode_002 got worse.</aside>
+</section>
+<section id="episodes" style="background:#F4F6F3; color:#0F1720; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Per-episode deltas</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">Named, not averaged away</h2>
+  <div style="display:flex; gap:48px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <h3 style="font-size:32px; font-weight:600; color:#1E8A52">Largest improvements</h3>
+      <table style="font-size:28px; font-variant-numeric:tabular-nums; background:#FFFFFF; border:1px solid #DDE3DF">
+        <tr style="background:#E9EEEA"><th style="width:40%; text-align:left">Episode</th><th style="width:20%; text-align:right">Baseline</th><th style="width:20%; text-align:right">Candidate</th><th style="width:20%; text-align:right">Change</th></tr>
+        <tr><td>episode_008</td><td style="text-align:right">78.74</td><td style="text-align:right">84.96</td><td style="text-align:right; color:#1E8A52">+6.22</td></tr>
+        <tr><td>episode_007</td><td style="text-align:right">85.90</td><td style="text-align:right">87.99</td><td style="text-align:right; color:#1E8A52">+2.09</td></tr>
+        <tr><td>episode_001</td><td style="text-align:right">86.23</td><td style="text-align:right">88.25</td><td style="text-align:right; color:#1E8A52">+2.02</td></tr>
+      </table>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <h3 style="font-size:32px; font-weight:600; color:#C4432B">Regression caught</h3>
+      <table style="font-size:28px; font-variant-numeric:tabular-nums; background:#FFFFFF; border:1px solid #DDE3DF">
+        <tr style="background:#E9EEEA"><th style="width:40%; text-align:left">Episode</th><th style="width:20%; text-align:right">Baseline</th><th style="width:20%; text-align:right">Candidate</th><th style="width:20%; text-align:right">Change</th></tr>
+        <tr><td>episode_002</td><td style="text-align:right">87.26</td><td style="text-align:right">86.93</td><td style="text-align:right; color:#C4432B">−0.33</td></tr>
+      </table>
+      <p style="font-size:28px; line-height:1.4; color:#3E4A56">One episode out of ten got worse. The strict gate still passed because the regression is under threshold, but it is reported by name so an engineer can look at it.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">Source: artifacts/checkpoint_validation/comparison_summary.json</p>
+  <aside>Both tables read from the committed comparison summary. episode_002 went from 87.26 to 86.93.</aside>
+</section>
+<section id="metrics" style="background:#F4F6F3; color:#0F1720; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Diagnosis, not just a number</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">Five metrics, and which ones are live for your data</h2>
+  <table style="font-size:28px; background:#FFFFFF; border:1px solid #DDE3DF">
+    <tr style="background:#E9EEEA"><th style="width:38%; text-align:left">Metric</th><th style="width:12%; text-align:right">Weight</th><th style="width:50%; text-align:left">Availability</th></tr>
+    <tr><td>Visual Similarity (MSE + PSNR + SSIM)</td><td style="text-align:right">25%</td><td>Any aligned RGB video pair</td></tr>
+    <tr><td>Temporal Stability (flicker, jumps)</td><td style="text-align:right">20%</td><td>Any predicted video with 2+ frames</td></tr>
+    <tr><td>Action Consistency</td><td style="text-align:right">30%</td><td>Requires action labels or an action adapter</td></tr>
+    <tr><td>Object Permanence</td><td style="text-align:right">15%</td><td>Requires object tracking (synthetic suites today)</td></tr>
+    <tr><td>Contact Realism</td><td style="text-align:right">10%</td><td>Requires robot + object tracking (synthetic suites today)</td></tr>
+  </table>
+  <p style="font-size:30px; line-height:1.4; color:#3E4A56; max-width:1600px">Metrics without their required signals report <b>N/A, never a fake zero</b>. The composite renormalizes over what is actually available, and coverage is reported in every result.</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">Availability rules per metric: docs/METRIC_CARDS.md</p>
+  <aside>Be upfront that Action Consistency, Object Permanence and Contact Realism only activate with the right signals. On arbitrary real video the gate runs on Visual Similarity and Temporal Stability.</aside>
+</section>
+<section id="dashboard" style="background:#0F1720; color:#F4F6F3; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Dashboard</p>
+  <div style="display:flex; gap:48px; align-items:start">
+    <div style="width:520px; display:flex; flex-direction:column; gap:28px">
+      <h2 style="font-size:64px; font-weight:600; line-height:1.1; letter-spacing:-2px">See exactly what failed</h2>
+      <ul style="font-size:30px; line-height:1.5; color:#B8C2CC">
+        <li>Composite score with per-metric breakdown</li>
+        <li>Side-by-side frame comparison</li>
+        <li>Evidence list for each failing metric</li>
+        <li>Hash-verified result.json and summary.md</li>
+      </ul>
+    </div>
+    <img src="dashboard.png" alt="WorldBench dashboard showing a failing model: composite 42/100, per-metric breakdown, frame comparison and evidence list" style="width:1096px; height:640px; object-fit:contain; background:#1A2530; border:1px solid #2C3A47; border-radius:16px">
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">7</p>
+  <aside>The screenshot shows a deliberately failing model at 42/100 so the diagnosis view has something to point at.</aside>
+</section>
+<section id="ci" style="background:#0F1720; color:#F4F6F3; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">CI integration</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">One step in any GitHub workflow</h2>
+  <div style="display:flex; gap:48px; align-items:start">
+    <div style="flex:1; background:#1A2530; padding:40px; border:1px solid #2C3A47; border-radius:16px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; line-height:1.6; color:#DCE3E8; white-space:nowrap">- uses: tigee1311/worldbench@main<br>&#160;&#160;with:<br>&#160;&#160;&#160;&#160;ground-truth: eval_suite<br>&#160;&#160;&#160;&#160;predictions: candidate_predictions<br>&#160;&#160;&#160;&#160;baseline: artifacts/approved-baseline.json<br>&#160;&#160;&#160;&#160;config: worldbench.yml<br>&#160;&#160;&#160;&#160;skip-context: "4"</p>
+    </div>
+    <div style="width:560px; display:flex; flex-direction:column; gap:24px">
+      <div style="display:flex; gap:20px; align-items:start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3DBE7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px; height:40px; color:#3DBE7A; flex:none"><path d="M5 13l4 4L19 7"/></svg>
+        <p style="font-size:30px; line-height:1.4; color:#B8C2CC">Install, evaluate, gate, fail the PR on regression</p>
+      </div>
+      <div style="display:flex; gap:20px; align-items:start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3DBE7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px; height:40px; color:#3DBE7A; flex:none"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <p style="font-size:30px; line-height:1.4; color:#B8C2CC">Strict config match and dataset hash checks by default</p>
+      </div>
+      <div style="display:flex; gap:20px; align-items:start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3DBE7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px; height:40px; color:#3DBE7A; flex:none"><path d="M12 2l2.4 2.2 3.2-.4 1 3.1 2.8 1.6-1.2 3 1.2 3-2.8 1.6-1 3.1-3.2-.4L12 22l-2.4-2.2-3.2.4-1-3.1-2.8-1.6 1.2-3-1.2-3 2.8-1.6 1-3.1 3.2.4z"/><path d="M9 12l2 2 4-4"/></svg>
+        <p style="font-size:30px; line-height:1.4; color:#B8C2CC">Re-verify any past result with verify-run</p>
+      </div>
+      <div style="display:flex; gap:20px; align-items:start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3DBE7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px; height:40px; color:#3DBE7A; flex:none"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+        <p style="font-size:30px; line-height:1.4; color:#B8C2CC">pip install "worldbench[video]" for local use, 11 CLI commands</p>
+      </div>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">Details: docs/CI_INTEGRATION.md · Importers for LeRobot datasets and NanoWM RT-1</p>
+  <aside>The reusable composite action lives at the repo root as action.yml. skip-context must match the value the baseline was built with.</aside>
+</section>
+<section id="limits" style="background:#F4F6F3; color:#0F1720; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Scope and roadmap</p>
+  <h2 style="font-size:72px; font-weight:600; line-height:1.1; letter-spacing:-2px">Honest limits, verified behavior only</h2>
+  <div style="display:flex; gap:32px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <h3 style="font-size:32px; font-weight:600; color:#1E8A52">Working now</h3>
+      <ul style="font-size:28px; line-height:1.5; color:#3E4A56">
+        <li>Batch evaluation and regression gates</li>
+        <li>Bootstrap uncertainty bounds</li>
+        <li>Provenance verification</li>
+        <li>LeRobot import, plugin metrics and adapters</li>
+      </ul>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <h3 style="font-size:32px; font-weight:600; color:#0F1720">Near term</h3>
+      <ul style="font-size:28px; line-height:1.5; color:#3E4A56">
+        <li>Adapters for common export layouts</li>
+        <li>Second public-model validation</li>
+        <li>External pilots with teams already saving predictions</li>
+      </ul>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px; background:#FFFFFF; padding:40px; border:1px solid #DDE3DF; border-radius:16px">
+      <h3 style="font-size:32px; font-weight:600; color:#C4432B">Not claimed</h3>
+      <ul style="font-size:28px; line-height:1.5; color:#3E4A56">
+        <li>No robot control or real-world execution</li>
+        <li>No claim that a video metric predicts task success</li>
+        <li>Leaderboards and learned metrics deferred until validated</li>
+      </ul>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#7A8794">docs/ROADMAP.md separates verified behavior from future work. Nothing unimplemented is marked done.</p>
+  <aside>WorldBench evaluates saved predicted visual futures. External adoption and human calibration are documented as protocols, not claimed as done.</aside>
+</section>
+<section id="close" style="background:#163A2A; color:#F4F6F3; font-family:'IBM Plex Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; justify-content:space-between">
+  <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:28px; color:#3DBE7A; letter-spacing:2px; text-transform:uppercase">Get started</p>
+  <div style="display:flex; flex-direction:column; gap:40px">
+    <h2 style="font-size:96px; font-weight:600; line-height:1.05; letter-spacing:-3px; max-width:1500px">Try it in 60 seconds.</h2>
+    <div style="background:#0F1720; padding:32px 40px; border-radius:16px; max-width:1100px">
+      <p style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:30px; line-height:1.6; color:#DCE3E8; white-space:nowrap">python -m pip install "worldbench[video]"<br>worldbench eval-videos --demo --output results/demo</p>
+    </div>
+  </div>
+  <div style="display:flex; gap:64px">
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <p style="font-size:24px; color:#8FD6B0; text-transform:uppercase; letter-spacing:1px">Repo</p>
+      <p style="font-size:32px; font-weight:600">github.com/tigee1311/worldbench</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <p style="font-size:24px; color:#8FD6B0; text-transform:uppercase; letter-spacing:1px">PyPI</p>
+      <p style="font-size:32px; font-weight:600">pypi.org/project/worldbench</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <p style="font-size:24px; color:#8FD6B0; text-transform:uppercase; letter-spacing:1px">Site</p>
+      <p style="font-size:32px; font-weight:600">worldbench.xyz</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#8FD6B0">Issues and pilot requests welcome, especially from teams already producing saved world-model predictions.</p>
+  <aside>Close by inviting pilots. The best next customers are teams that already save predicted futures to disk.</aside>
+</section>
+</div>
+<div id="hud"><span id="cur">1</span> / 10 &nbsp;·&nbsp; ← → or click</div>
+<div id="nav"><div id="bar"></div></div>
+<script>
+const S=[...document.querySelectorAll('#stage>section')],N=S.length;let i=0;
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${k})`;stage.style.left='50%';stage.style.top='50%';stage.style.transformOrigin='50% 50%';}
+function go(j){i=Math.max(0,Math.min(N-1,j));S.forEach((s,k)=>s.classList.toggle('on',k===i));cur.textContent=i+1;bar.style.width=((i+1)/N*100)+'%';history.replaceState(null,'','#'+(i+1));}
+addEventListener('resize',fit);fit();
+addEventListener('keydown',e=>{if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();go(i+1)}else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();go(i-1)}else if(e.key==='Home')go(0);else if(e.key==='End')go(N-1);else if(e.key==='f')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()});
+addEventListener('click',e=>{if(e.target.closest('a'))return;go(e.clientX<innerWidth*0.25?i-1:i+1)});
+let tx=null;addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});addEventListener('touchend',e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40)go(dx<0?i+1:i-1);tx=null});
+go((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body></html>
